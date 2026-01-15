@@ -71,6 +71,10 @@ const Navbar = () => {
           >
             Login
           </NavLink>
+          {localStorage.getItem("role") === "admin" && (
+          <Link to="/admin/add-place">Admin Panel</Link>
+          )}
+
 
           <NavLink
             to="/register"
