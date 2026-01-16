@@ -6,35 +6,52 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-  const res = await fetch("http://localhost:5000/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+    // ✅ Custom validation
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
 
-  const data = await res.json();
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
 
-  if (!res.ok) {
-    alert(data.message || "Login failed");
-    return;
-  }
+    setError("");
 
-  // ✅ Save auth info
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("role", data.role);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role }),
+      });
 
-  // ✅ REDIRECT BASED ON ROLE
-  if (data.role === "admin") {
-    window.location.href = "/explore"; // 👈 admin goes to explore
-  } else {
-    window.location.href = "/";
-  }
-};
+      const data = await res.json();
 
+      if (!res.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
+
+      // ✅ Save auth info
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+
+      // ✅ Redirect
+      if (data.role === "admin") {
+        navigate("/explore");
+      } else {
+        navigate("/");
+      }
+    } catch (err) {
+      setError("Something went wrong. Try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-ivory">
@@ -48,9 +65,7 @@ const Login = () => {
           <button
             onClick={() => setRole("user")}
             className={`w-1/2 py-2 rounded ${
-              role === "user"
-                ? "bg-saffron text-white"
-                : "bg-gray-100"
+              role === "user" ? "bg-saffron text-white" : "bg-gray-100"
             }`}
           >
             User
@@ -59,33 +74,46 @@ const Login = () => {
           <button
             onClick={() => setRole("admin")}
             className={`w-1/2 py-2 rounded ${
-              role === "admin"
-                ? "bg-indigo text-white"
-                : "bg-gray-100"
+              role === "admin" ? "bg-indigo text-white" : "bg-gray-100"
             }`}
           >
             Admin
           </button>
         </div>
 
+        {/* Email */}
         <input
-          type="email"
+          type="text"   // 👈 changed from email
           placeholder="Email"
-          className="border p-3 w-full rounded mb-3"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="border p-3 w-full rounded mb-3"
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="border p-3 w-full rounded mb-4"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        {/* Password with Show/Hide */}
+        <div className="relative mb-4">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="border p-3 w-full rounded pr-12"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-sm text-indigo"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
 
+        {/* Error */}
         {error && (
           <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
         )}
 
+        {/* Login Button */}
         <button
           onClick={handleLogin}
           className="w-full bg-saffron text-white py-3 rounded hover:opacity-90"
