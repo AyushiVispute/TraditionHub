@@ -1,8 +1,22 @@
 import { Navigate } from "react-router-dom";
 
 const AdminRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  return role === "admin" ? children : <Navigate to="/login" />;
+
+  // ❌ Not logged in
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ❌ Logged in but not admin
+  if (role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  // ✅ Admin allowed
+  return children;
 };
 
 export default AdminRoute;
+

@@ -4,14 +4,13 @@ import { useNavigate, Link } from "react-router-dom";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
+  const [roleUI, setRoleUI] = useState("user"); // UI only
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    // ✅ Custom validation
     if (!email || !password) {
       setError("Email and password are required");
       return;
@@ -28,7 +27,7 @@ const Login = () => {
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, password }), // 🔥 FIXED
       });
 
       const data = await res.json();
@@ -38,13 +37,13 @@ const Login = () => {
         return;
       }
 
-      // ✅ Save auth info
+      // Save auth info
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
 
-      // ✅ Redirect
+      // Redirect (backend decides role)
       if (data.role === "admin") {
-        navigate("/explore");
+        navigate("/admin/add-place");
       } else {
         navigate("/");
       }
@@ -60,21 +59,27 @@ const Login = () => {
           Login
         </h1>
 
-        {/* Role Switch */}
+        {/* Role Switch (UI only) */}
         <div className="flex gap-2 mb-4">
           <button
-            onClick={() => setRole("user")}
-            className={`w-1/2 py-2 rounded ${
-              role === "user" ? "bg-saffron text-white" : "bg-gray-100"
+            type="button"
+            onClick={() => setRoleUI("user")}
+            className={`w-1/2 py-2 rounded border transition ${
+              roleUI === "user"
+                ? "bg-saffron text-white border-saffron"
+                : "bg-gray-100 border-gray-300"
             }`}
           >
             User
           </button>
 
           <button
-            onClick={() => setRole("admin")}
-            className={`w-1/2 py-2 rounded ${
-              role === "admin" ? "bg-indigo text-white" : "bg-gray-100"
+            type="button"
+            onClick={() => setRoleUI("admin")}
+            className={`w-1/2 py-2 rounded border transition ${
+              roleUI === "admin"
+                ? "bg-indigo text-white border-indigo"
+                : "bg-gray-100 border-gray-300"
             }`}
           >
             Admin
@@ -83,14 +88,14 @@ const Login = () => {
 
         {/* Email */}
         <input
-          type="text"   // 👈 changed from email
+          type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="border p-3 w-full rounded mb-3"
         />
 
-        {/* Password with Show/Hide */}
+        {/* Password */}
         <div className="relative mb-4">
           <input
             type={showPassword ? "text" : "password"}
@@ -108,17 +113,15 @@ const Login = () => {
           </button>
         </div>
 
-        {/* Error */}
         {error && (
           <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
         )}
 
-        {/* Login Button */}
         <button
           onClick={handleLogin}
           className="w-full bg-saffron text-white py-3 rounded hover:opacity-90"
         >
-          Login as {role}
+          Login
         </button>
 
         <p className="text-center text-sm mt-4">

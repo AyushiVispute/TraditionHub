@@ -21,26 +21,37 @@ router.post("/register", async (req, res) => {
 
 // 🔐 Login
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    let { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user)
-    return res.status(401).json({ message: "Invalid credentials" });
+    // 🔥 FIX: normalize input
+    email = email.trim().toLowerCase();
+    password = password.trim();
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch)
-    return res.status(401).json({ message: "Invalid credentials" });
-    
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log("User not found:", email);
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-  res.json({
-    token,
-    role: user.role,
-  });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Password mismatch for:", email);
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ token, role: user.role });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
+
 
 export default router;
