@@ -3,6 +3,7 @@ import Navbar from "@/components/common/Navbar";
 import PlacesCard from "@/components/culture/PlacesCard";
 import PlacesCardSkeleton from "@/components/culture/PlacesCardSkeleton";
 import { fetchPlaces } from "@/services/placeApi";
+import { motion } from "framer-motion";
 
 const Explore = () => {
   const [places, setPlaces] = useState([]);
@@ -12,9 +13,7 @@ const Explore = () => {
   const [deityFilter, setDeityFilter] = useState("All");
   const [search, setSearch] = useState("");
 
-  const isAdmin = localStorage.getItem("role") === "admin";
-
-  // 🔁 Fetch places (with debounce for search)
+  // 🔁 Fetch places when filters change
   useEffect(() => {
     const timer = setTimeout(() => {
       loadPlaces();
@@ -24,13 +23,15 @@ const Explore = () => {
   }, [stateFilter, deityFilter, search]);
 
   const loadPlaces = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+
       const data = await fetchPlaces({
-        state: stateFilter !== "All" ? stateFilter : "",
-        deity: deityFilter !== "All" ? deityFilter : "",
+        state: stateFilter === "All" ? "" : stateFilter,
+        deity: deityFilter === "All" ? "" : deityFilter,
         search,
       });
+
       setPlaces(data);
     } catch (error) {
       console.error("Failed to fetch places", error);
@@ -39,120 +40,87 @@ const Explore = () => {
     }
   };
 
-  // 🗑️ Admin delete place
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Delete this place?");
-    if (!confirmDelete) return;
-
-    try {
-      await fetch(`http://localhost:5000/api/places/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      setPlaces((prev) => prev.filter((p) => p._id !== id));
-    } catch (error) {
-      console.error("Delete failed", error);
-      alert("Failed to delete place");
-    }
-  };
-
   return (
     <>
       <Navbar />
 
-      <section className="bg-ivory min-h-screen px-8 py-12">
-        {/* Heading */}
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-indigoDark">
-            Explore Sacred <span className="text-saffron">Places</span>
-          </h1>
+     <section className="bg-[#f6f1ea] min-h-screen px-6 lg:px-12 py-14">
+  <div className="max-w-7xl mx-auto">
 
-          <p className="mt-4 text-indigoDark/70 max-w-2xl mx-auto">
-            Discover India’s most revered temples, their spiritual meaning,
-            cultural history, and architectural beauty.
-          </p>
-        </div>
+    {/* Heading */}
+    <div className="mb-10">
+      <h1 className="text-5xl font-bold text-gray-900">
+        Explore <span className="text-orange-600">Heritage</span>
+      </h1>
+      <p className="mt-3 text-gray-600 max-w-xl">
+        Discover the timeless wonders and traditions of India.
+      </p>
+    </div>
 
-        {/* Admin Add Button */}
-        {isAdmin && (
-          <div className="text-center mt-8">
-            <a
-              href="/admin/add-place"
-              className="inline-block bg-saffron text-white px-6 py-2 rounded-md shadow hover:opacity-90"
-            >
-              + Add New Place
-            </a>
-          </div>
-        )}
+    {/* Filters Container */}
+    <div className="bg-white rounded-2xl shadow-md p-5 flex flex-col lg:flex-row gap-4 items-center">
 
-        {/* Filters */}
-        <div className="max-w-7xl mx-auto mt-8 flex flex-wrap justify-center gap-6">
-          {/* Search */}
-          <input
-            type="text"
-            placeholder="Search temples or heritage sites..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border border-goldMuted/40 bg-white px-4 py-2 rounded-md text-sm w-64 focus:outline-none focus:ring-2 focus:ring-saffron"
-          />
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search heritage or description..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="flex-1 bg-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+      />
 
-          {/* State Filter */}
-          <select
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            className="border border-goldMuted/40 bg-white px-4 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-saffron"
+      {/* Category / Deity */}
+      <select
+        value={deityFilter}
+        onChange={(e) => setDeityFilter(e.target.value)}
+        className="bg-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+      >
+        <option value="All">All Categories</option>
+        <option value="Shiva">Shiva</option>
+        <option value="Parvati">Parvati</option>
+        <option value="Jagannath">Jagannath</option>
+      </select>
+
+      {/* State */}
+      <select
+        value={stateFilter}
+        onChange={(e) => setStateFilter(e.target.value)}
+        className="bg-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+      >
+        <option value="All">All States</option>
+        <option value="Uttar Pradesh">Uttar Pradesh</option>
+        <option value="Tamil Nadu">Tamil Nadu</option>
+        <option value="Gujarat">Gujarat</option>
+      </select>
+
+    </div>
+
+    {/* Grid */}
+    <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {loading ? (
+        Array.from({ length: 6 }).map((_, index) => (
+          <PlacesCardSkeleton key={index} />
+        ))
+      ) : places.length > 0 ? (
+        places.map((place) => (
+          <motion.div
+            key={place._id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <option value="All">All States</option>
-            <option value="Uttar Pradesh">Uttar Pradesh</option>
-            <option value="Tamil Nadu">Tamil Nadu</option>
-            <option value="Gujarat">Gujarat</option>
-          </select>
+            <PlacesCard place={place} />
+          </motion.div>
+        ))
+      ) : (
+        <p className="col-span-full text-center text-gray-600">
+          No places found for selected filters.
+        </p>
+      )}
+    </div>
 
-          {/* Deity Filter */}
-          <select
-            value={deityFilter}
-            onChange={(e) => setDeityFilter(e.target.value)}
-            className="border border-goldMuted/40 bg-white px-4 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-saffron"
-          >
-            <option value="All">All Deities</option>
-            <option value="Shiva">Lord Shiva</option>
-            <option value="Parvati">Goddess Meenakshi</option>
-            <option value="Jagannath">Lord Jagannath</option>
-          </select>
-        </div>
-
-        {/* Grid */}
-        <div className="max-w-7xl mx-auto mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, index) => (
-              <PlacesCardSkeleton key={index} />
-            ))
-          ) : places.length > 0 ? (
-            places.map((place) => (
-              <div key={place._id} className="relative">
-                <PlacesCard place={place} />
-
-                {/* Admin Delete Button */}
-                {isAdmin && (
-                  <button
-                    onClick={() => handleDelete(place._id)}
-                    className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs shadow"
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-            ))
-          ) : (
-            <p className="col-span-full text-center text-indigoDark">
-              No places found for selected filters.
-            </p>
-          )}
-        </div>
-      </section>
+  </div>
+</section>
     </>
   );
 };

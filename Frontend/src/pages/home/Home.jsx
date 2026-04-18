@@ -5,7 +5,7 @@ const traditions = [
   {
     title: "Diwali",
     desc: "Festival of lights symbolizing victory of light over darkness.",
-    image: "/images/diwali.jpg",
+    image: "/src/assets/diwali.jpg",
   },
   {
     title: "Wari Yatra",
@@ -29,7 +29,7 @@ const occasions = {
 const states = {
   Maharashtra: ["Ganpati Festival", "Wari Yatra", "Paithani Saree"],
   Rajasthan: ["Ghoomar Dance", "Desert Festival"],
-  TamilNadu: ["Pongal", "Bharatanatyam"],
+  "Tamil Nadu" : ["Pongal", "Bharatanatyam"],
 };
 
 const facts = [
@@ -44,143 +44,69 @@ export default function Home() {
   const [factIndex, setFactIndex] = useState(0);
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-white text-gray-800">
 
-      {/* ✅ NAVBAR */}
       <Navbar />
 
-      {/* 1️⃣ HERO SECTION (NO VIDEO NOW) */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-b from-indigoDark to-black text-white">
-        
-        {/* 👉 WHEN YOU ADD VIDEO LATER, PUT IT HERE */}
-        {/*
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover -z-10"
-        >
-          <source src="/videos/tradition-bg.mp4" type="video/mp4" />
-        </video>
-        */}
+      {/* 1️⃣ HERO SECTION */}
+      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+        <img
+          src="/images/hero-india.jpg"
+          alt="Indian Culture"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/60"></div>
 
-        {/* Content */}
-        <div className="relative z-10 text-center max-w-3xl px-6">
-          <h1 className="text-5xl font-bold mb-4">
+        <div className="relative z-10 text-center text-white max-w-3xl px-6">
+          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
             Preserving India’s{" "}
             <span className="text-saffron">Living Traditions</span>
           </h1>
-          <p className="text-lg mb-6">
-            Discover festivals, rituals, food, and culture passed through generations.
+
+          <p className="mt-6 text-lg text-gray-200">
+            Discover the stories, rituals, festivals, and heritage
+            passed through generations.
           </p>
-          <button className="px-8 py-3 bg-saffron rounded-full text-lg">
+
+          <button className="mt-8 px-8 py-3 bg-saffron hover:bg-orange-600 transition rounded-full text-lg shadow-lg">
             Explore Traditions
           </button>
         </div>
+        
       </section>
+      {/* FEATURED */}
+<section className="py-24 bg-white text-center">
+  <h2 className="text-4xl font-bold mb-12">
+    Featured Traditions
+  </h2>
 
-      {/* 2️⃣ TRADITION OF THE DAY */}
-      <section className="py-16 px-8 bg-white">
-        <h2 className="text-3xl font-bold mb-8 text-center">
-          Tradition of the Day
-        </h2>
-
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center">
-          <img
-            src={traditions[todayIndex].image}
-            alt={traditions[todayIndex].title}
-            className="w-full md:w-1/2 rounded-xl"
-          />
-          <div>
-            <h3 className="text-2xl font-semibold mb-3">
-              {traditions[todayIndex].title}
-            </h3>
-            <p className="text-gray-700 mb-4">
-              {traditions[todayIndex].desc}
-            </p>
-            <button className="px-5 py-2 bg-indigoDark text-white rounded-full">
-              Know More
-            </button>
-          </div>
+  <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+    {traditions.slice(0, 3).map((item) => (
+      <div key={item.title} className="rounded-2xl shadow-lg overflow-hidden">
+        <img src={item.image} className="h-64 w-full object-cover" />
+        <div className="p-6">
+          <h3 className="text-xl font-semibold">{item.title}</h3>
+          <p className="text-gray-600 text-sm mt-2">{item.desc}</p>
         </div>
-      </section>
+      </div>
+    ))}
+  </div>
+</section>
 
-      {/* 3️⃣ OCCASION-BASED TABS */}
-      <section className="py-16 bg-cream px-8">
-        <h2 className="text-3xl font-bold mb-8 text-center">
-          Explore by Occasion
-        </h2>
-
-        <div className="flex justify-center gap-4 mb-6 flex-wrap">
-          {Object.keys(occasions).map((item) => (
-            <button
-              key={item}
-              onClick={() => setActiveOccasion(item)}
-              className={`px-5 py-2 rounded-full ${
-                activeOccasion === item
-                  ? "bg-saffron text-white"
-                  : "bg-white border"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        <div className="text-center">
-          {occasions[activeOccasion].map((item) => (
-            <p key={item} className="text-lg text-gray-700">
-              • {item}
-            </p>
-          ))}
-        </div>
-      </section>
-
-      {/* 4️⃣ STATE-WISE TRADITIONS */}
-      <section className="py-16 px-8 bg-white">
-        <h2 className="text-3xl font-bold mb-8 text-center">
-          Traditions by State
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {Object.keys(states).map((state) => (
-            <div key={state} className="p-6 rounded-xl shadow-md">
-              <h3 className="text-xl font-semibold mb-2">{state}</h3>
-              {states[state].map((item) => (
-                <p key={item} className="text-gray-600">
-                  • {item}
-                </p>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 5️⃣ DID YOU KNOW */}
-      <section className="py-16 bg-cream text-center px-8">
-        <h2 className="text-3xl font-bold mb-6">Did You Know?</h2>
-        <p className="text-lg mb-6">{facts[factIndex]}</p>
-        <button
-          onClick={() => setFactIndex((factIndex + 1) % facts.length)}
-          className="px-6 py-2 bg-indigoDark text-white rounded-full"
-        >
-          Show Another Fact
-        </button>
-      </section>
+      
 
       {/* 6️⃣ CTA */}
-      <section className="py-20 bg-indigoDark text-white text-center px-6">
+      <section className="py-24 bg-indigoDark text-white text-center px-6">
         <h2 className="text-4xl font-bold mb-4">
           Share & Preserve Your Culture
         </h2>
-        <p className="mb-6">
+
+        <p className="mb-6 text-gray-200">
           Every tradition matters. Be part of the community.
         </p>
-        <button className="px-8 py-3 bg-saffron rounded-full text-lg">
+
+        <button className="px-8 py-3 bg-saffron rounded-full text-lg shadow-lg hover:bg-orange-600 transition">
           Share a Tradition
         </button>
       </section>

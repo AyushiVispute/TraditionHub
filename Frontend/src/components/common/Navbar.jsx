@@ -1,12 +1,25 @@
-import { NavLink, Link } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 
+
 const Navbar = () => {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
   const baseLink =
     "text-indigoDark no-underline hover:text-saffron transition font-medium";
 
   const activeLink =
     "text-saffron border-b-2 border-saffron pb-1";
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login"); // ✅ no reload
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-ivory border-b border-goldMuted/40">
@@ -14,16 +27,16 @@ const Navbar = () => {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-4 no-underline">
-            <img
-                src={logo}
-                alt="TraditionX Logo"
-                className="h-14 w-14 rounded-full object-cover border-2 border-saffron shadow-md"
-            />
-            <span className="text-3xl font-bold tracking-wide text-indigoDark">
-                Tradition<span className="text-saffron">Hub</span>
-            </span>
+          <img
+            src={logo}
+            alt="TraditionX Logo"
+            className="h-14 w-14 rounded-full object-cover border-2 border-saffron shadow-md"
+          />
+          <span className="text-3xl font-bold tracking-wide text-indigoDark">
+            Tradition<span className="text-saffron">Hub</span>
+          </span>
         </Link>
-        
+
         {/* Center Navigation */}
         <div className="flex items-center gap-10 text-sm">
           <NavLink
@@ -65,20 +78,47 @@ const Navbar = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-6">
-          <NavLink
-            to="/login"
-            className="text-sm font-medium text-indigoDark hover:text-saffron no-underline transition"
-          >
-            Login
-          </NavLink>
-  
+          
+          {token ? (
+            <>
+              {/* Logout */}
+              <button
+  onClick={handleLogout}
+  className="bg-saffron text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#d65f44] transition"
+>
+  Logout
+</button>
 
-          <NavLink
-            to="/register"
-            className="bg-saffron text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#d65f44] transition no-underline"
-          >
-            Join
-          </NavLink>
+              {/* Admin button */}
+              {role === "admin" && (
+                <NavLink
+                  to="/admin"
+                  className="text-sm font-medium text-indigoDark hover:text-saffron no-underline transition"
+                >
+                  Admin
+                </NavLink>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Login */}
+              <NavLink
+                to="/login"
+                className="text-sm font-medium text-indigoDark hover:text-saffron no-underline transition"
+              >
+                Login
+              </NavLink>
+
+              {/* Join (only when logged out) */}
+              <NavLink
+                to="/register"
+                className="bg-saffron text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#d65f44] transition no-underline"
+              >
+                Join
+              </NavLink>
+            </>
+          )}
+
         </div>
 
       </nav>

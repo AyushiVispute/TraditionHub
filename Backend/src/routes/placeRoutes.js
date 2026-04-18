@@ -3,18 +3,29 @@ import {
   getAllPlaces,
   getPlaceById,
   createPlace,
+  updatePlace,
   deletePlace,
+  getAdminStats,   // ✅ Added
 } from "../controllers/placeController.js";
+
 import adminAuth from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
-// 🔓 Public routes
+
+// 📊 Admin stats (MUST be above :id)
+router.get("/admin/stats", adminAuth, getAdminStats);
+
+
+// 🔓 Public Routes
 router.get("/", getAllPlaces);
 router.get("/:id", getPlaceById);
 
-// 🔒 Admin-only routes
+
+// 🔒 Admin CRUD Routes
 router.post("/", adminAuth, createPlace);
+router.put("/:id", adminAuth, updatePlace);
 router.delete("/:id", adminAuth, deletePlace);
+
 
 export default router;

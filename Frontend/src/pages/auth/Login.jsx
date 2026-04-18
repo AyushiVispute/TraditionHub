@@ -43,7 +43,7 @@ const Login = () => {
 
       // Redirect (backend decides role)
       if (data.role === "admin") {
-        navigate("/admin/add-place");
+        navigate("/admin");
       } else {
         navigate("/");
       }

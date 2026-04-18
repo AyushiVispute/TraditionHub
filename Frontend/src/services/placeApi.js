@@ -1,3 +1,4 @@
+
 const BASE_URL = "http://localhost:5000/api/places";
 
 // Get all places (with filters & search)
@@ -26,10 +27,27 @@ export const createPlace = async (placeData) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
     body: JSON.stringify(placeData),
   });
 
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to create place");
+  }
+
+  return res.json();
+};
+export const updatePlace = async (id, placeData) => {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify(placeData),
+  });
 
   return res.json();
 };

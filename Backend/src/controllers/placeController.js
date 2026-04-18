@@ -1,4 +1,5 @@
 import Place from "../models/Place.js";
+import User from "../models/User.js";
 
 
 // GET /api/places
@@ -36,6 +37,23 @@ export const getPlaceById = async (req, res) => {
 
   res.json(place);
 };
+export const updatePlace = async (req, res) => {
+  try {
+    const updated = await Place.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Place not found" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 export const deletePlace = async (req, res) => {
   try {
     const place = await Place.findByIdAndDelete(req.params.id);
@@ -47,3 +65,23 @@ export const deletePlace = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }
+
+// 📊 Admin Dashboard Stats
+export const getAdminStats = async (req, res) => {
+  try {
+    const totalPlaces = await Place.countDocuments();
+    const totalUsers = await User.countDocuments();
+
+    const recentPlaces = await Place.find()
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.status(200).json({
+      totalPlaces,
+      totalUsers,
+      recentPlaces,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
