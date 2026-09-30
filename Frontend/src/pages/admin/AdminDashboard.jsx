@@ -51,12 +51,22 @@ const AdminDashboard = () => {
               <Link to="/admin" className="hover:text-orange-600 transition">
                 Dashboard
               </Link>
+              <Link to="/admin/tois" className="...">Manage Topics</Link>
             </li>
+            <li><Link
+  to="/admin/guides"
+  className="hover:text-orange-600 transition"
+>
+  Manage Guides
+</Link></li>
+            
 
             <li>
               <Link to="/admin/add-place" className="hover:text-orange-600 transition">
                 Add Place
               </Link>
+              
+
             </li>
           </ul>
         </div>

@@ -17,7 +17,7 @@ export const getAllPlaces = async (req, res) => {
   res.json(places);
 };
 
-// POST /api/places
+// POST/api/places
 export const createPlace = async (req, res) => {
   try {
     const place = await Place.create(req.body);
@@ -29,42 +29,64 @@ export const createPlace = async (req, res) => {
 
 // GET /api/places/:id
 export const getPlaceById = async (req, res) => {
-  const place = await Place.findById(req.params.id);
+  try {
+    const place = await Place.findById(req.params.id);
 
-  if (!place) {
-    return res.status(404).json({ message: "Place not found" });
+    if (!place) {
+      return res.status(404).json({
+        message: "Place not found",
+      });
+    }
+
+    res.json(place);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
   }
-
-  res.json(place);
 };
+
 export const updatePlace = async (req, res) => {
   try {
     const updated = await Place.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updated) {
-      return res.status(404).json({ message: "Place not found" });
+      return res.status(404).json({
+        message: "Place not found",
+      });
     }
 
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
+
 export const deletePlace = async (req, res) => {
   try {
     const place = await Place.findByIdAndDelete(req.params.id);
+
     if (!place) {
-      return res.status(404).json({ message: "Place not found" });
+      return res.status(404).json({
+        message: "Place not found",
+      });
     }
-    res.json({ message: "Place deleted successfully" });
+
+    res.json({
+      message: "Place deleted successfully",
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
-}
+};
 
 // 📊 Admin Dashboard Stats
 export const getAdminStats = async (req, res) => {

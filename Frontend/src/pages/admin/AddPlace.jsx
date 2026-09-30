@@ -15,6 +15,11 @@ const AddPlace = () => {
     description: "",
     location: "",
     category: "Temple",
+
+    // Required for itinerary planning
+    latitude: "",
+    longitude: "",
+    avgVisitMinutes: 60,
   });
 
   const [imageUrl, setImageUrl] = useState("");
@@ -23,16 +28,28 @@ const AddPlace = () => {
 
   // 🖼 Upload image
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+
     if (!file) return;
 
     try {
       setUploading(true);
+
       const data = await uploadImage(file);
+
+      if (!data?.url) {
+        throw new Error("Image URL was not returned");
+      }
+
       setImageUrl(data.url);
-      console.log("Image uploaded:", data.url);
+
+      toast.success("Image uploaded successfully");
     } catch (error) {
-      toast.error("Failed to save place");
+      console.error("Image upload error:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to upload image"
+      );
     } finally {
       setUploading(false);
     }
@@ -40,34 +57,105 @@ const AddPlace = () => {
 
   // 📝 Handle form changes
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // 💾 Save place
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate image
     if (!imageUrl) {
-      alert("Please upload an image first");
+      toast.error("Please upload an image first");
+      return;
+    }
+
+    // Validate latitude
+    const latitude = Number(form.latitude);
+
+    if (
+      !form.latitude ||
+      Number.isNaN(latitude) ||
+      latitude < -90 ||
+      latitude > 90
+    ) {
+      toast.error("Please enter a valid latitude (-90 to 90)");
+      return;
+    }
+
+    // Validate longitude
+    const longitude = Number(form.longitude);
+
+    if (
+      !form.longitude ||
+      Number.isNaN(longitude) ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      toast.error("Please enter a valid longitude (-180 to 180)");
+      return;
+    }
+
+    // Validate visit time
+    const avgVisitMinutes = Number(form.avgVisitMinutes);
+
+    if (
+      !form.avgVisitMinutes ||
+      Number.isNaN(avgVisitMinutes) ||
+      avgVisitMinutes <= 0
+    ) {
+      toast.error("Please enter a valid visit duration");
       return;
     }
 
     try {
       setSaving(true);
 
-      await createPlace({
-        ...form,
-        images: [imageUrl], // ⚠ important (array)
-      });
+      // Payload matching Backend Place schema
+      const placeData = {
+        title: form.title.trim(),
+        state: form.state.trim(),
+        deity: form.deity.trim(),
+        description: form.description.trim(),
+        location: form.location.trim(),
+        category: form.category,
 
-      toast.success("Place added successfully!✅");
+        // IMPORTANT:
+        // Backend expects coordinates.lat / coordinates.lng
+        coordinates: {
+          lat: latitude,
+          lng: longitude,
+        },
 
-      // Redirect to explore after save
+        // Used by the itinerary optimizer
+        avgVisitMinutes,
+
+        // Backend expects images as an array
+        images: [imageUrl],
+      };
+
+      console.log("Creating place:", placeData);
+
+      await createPlace(placeData);
+
+      toast.success("Place added successfully! ✅");
+
+      // Redirect after successful creation
       navigate("/explore");
-
     } catch (error) {
-      console.error("Save error:", error);
-      alert("Failed to save place");
+      console.error("Save place error:", error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to save place";
+
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -77,82 +165,286 @@ const AddPlace = () => {
     <>
       <Navbar />
 
-      <section className="bg-ivory min-h-screen px-8 py-12">
-        <div className="max-w-xl mx-auto bg-white p-6 rounded-xl border shadow">
-          <h1 className="text-2xl font-bold mb-6">Add New Place</h1>
+      <section className="bg-ivory min-h-screen px-4 sm:px-8 py-12">
+        <div className="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl border shadow">
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">
+              Add New Place
+            </h1>
 
-            {/* Image Upload */}
+            <p className="text-gray-500 text-sm mt-1">
+              Add cultural place information and location details
+              for recommendations and trip planning.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+          >
+
+            {/* ================= IMAGE ================= */}
+
             <div>
-              <label className="block text-sm mb-1">Upload Image</label>
-              <input type="file" accept="image/*" onChange={handleImageUpload} />
-              {uploading && <p className="text-sm">Uploading...</p>}
+              <label className="block text-sm font-medium mb-1">
+                Upload Image *
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading || saving}
+                className="w-full border rounded px-3 py-2"
+              />
+
+              {uploading && (
+                <p className="text-sm text-gray-500 mt-2">
+                  Uploading image...
+                </p>
+              )}
             </div>
 
             {imageUrl && (
-              <img
-                src={imageUrl}
-                alt="Preview"
-                className="w-full h-48 object-cover rounded"
-              />
+              <div>
+                <p className="text-sm font-medium mb-2">
+                  Image Preview
+                </p>
+
+                <img
+                  src={imageUrl}
+                  alt="Place preview"
+                  className="w-full h-52 object-cover rounded-lg border"
+                />
+              </div>
             )}
 
-            {/* Title */}
-            <input
-              name="title"
-              placeholder="Place Title"
-              value={form.title}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
+            {/* ================= TITLE ================= */}
 
-            {/* State */}
-            <input
-              name="state"
-              placeholder="State"
-              value={form.state}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Place Title *
+              </label>
 
-            {/* Deity */}
-            <input
-              name="deity"
-              placeholder="Deity"
-              value={form.deity}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-            />
+              <input
+                name="title"
+                placeholder="Example: Trimbakeshwar Temple"
+                value={form.title}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+                required
+                disabled={saving}
+              />
+            </div>
 
-            {/* Location */}
-            <input
-              name="location"
-              placeholder="Location"
-              value={form.location}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-            />
+            {/* ================= STATE ================= */}
 
-            {/* Description */}
-            <textarea
-              name="description"
-              placeholder="Description"
-              value={form.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full border px-3 py-2 rounded"
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                State *
+              </label>
+
+              <input
+                name="state"
+                placeholder="Example: Maharashtra"
+                value={form.state}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+                required
+                disabled={saving}
+              />
+            </div>
+
+            {/* ================= CATEGORY ================= */}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Category *
+              </label>
+
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded bg-white"
+                disabled={saving}
+              >
+                <option value="Temple">Temple</option>
+                <option value="Historical">Historical</option>
+                <option value="Museum">Museum</option>
+                <option value="Fort">Fort</option>
+                <option value="Heritage">Heritage</option>
+                <option value="Nature">Nature</option>
+                <option value="Beach">Beach</option>
+                <option value="Cultural">Cultural</option>
+                <option value="Religious">Religious</option>
+                <option value="Food">Food</option>
+                <option value="Craft">Craft</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* ================= DEITY ================= */}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Deity
+              </label>
+
+              <input
+                name="deity"
+                placeholder="Example: Lord Shiva"
+                value={form.deity}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+                disabled={saving}
+              />
+            </div>
+
+            {/* ================= LOCATION ================= */}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Location
+              </label>
+
+              <input
+                name="location"
+                placeholder="Example: Trimbak, Nashik"
+                value={form.location}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+                disabled={saving}
+              />
+            </div>
+
+            {/* ================= COORDINATES ================= */}
+
+            <div className="border rounded-lg p-4 bg-gray-50">
+
+              <h2 className="font-semibold mb-1">
+                📍 Location Coordinates
+              </h2>
+
+              <p className="text-xs text-gray-500 mb-4">
+                Required for distance calculation and itinerary
+                optimization.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                {/* Latitude */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Latitude *
+                  </label>
+
+                  <input
+                    type="number"
+                    name="latitude"
+                    placeholder="Example: 19.9322"
+                    value={form.latitude}
+                    onChange={handleChange}
+                    min="-90"
+                    max="90"
+                    step="any"
+                    className="w-full border px-3 py-2 rounded bg-white"
+                    required
+                    disabled={saving}
+                  />
+
+                  <p className="text-xs text-gray-400 mt-1">
+                    Range: -90 to 90
+                  </p>
+                </div>
+
+                {/* Longitude */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Longitude *
+                  </label>
+
+                  <input
+                    type="number"
+                    name="longitude"
+                    placeholder="Example: 73.5199"
+                    value={form.longitude}
+                    onChange={handleChange}
+                    min="-180"
+                    max="180"
+                    step="any"
+                    className="w-full border px-3 py-2 rounded bg-white"
+                    required
+                    disabled={saving}
+                  />
+
+                  <p className="text-xs text-gray-400 mt-1">
+                    Range: -180 to 180
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* ================= VISIT TIME ================= */}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Average Visit Time (minutes) *
+              </label>
+
+              <input
+                type="number"
+                name="avgVisitMinutes"
+                value={form.avgVisitMinutes}
+                onChange={handleChange}
+                min="5"
+                max="1440"
+                step="5"
+                className="w-full border px-3 py-2 rounded"
+                required
+                disabled={saving}
+              />
+
+              <p className="text-xs text-gray-500 mt-1">
+                Example: 60 means visitors usually spend about
+                1 hour here.
+              </p>
+            </div>
+
+            {/* ================= DESCRIPTION ================= */}
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Description *
+              </label>
+
+              <textarea
+                name="description"
+                placeholder="Describe the cultural, historical or religious significance of this place..."
+                value={form.description}
+                onChange={handleChange}
+                rows={5}
+                className="w-full border px-3 py-2 rounded resize-none"
+                required
+                disabled={saving}
+              />
+            </div>
+
+            {/* ================= BUTTON ================= */}
 
             <button
               type="submit"
-              disabled={saving}
-              className="w-full bg-saffron text-white py-2 rounded disabled:opacity-60"
+              disabled={saving || uploading}
+              className="w-full bg-saffron text-white py-3 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving ? "Saving..." : "Save Place"}
+              {saving
+                ? "Saving Place..."
+                : uploading
+                ? "Uploading Image..."
+                : "Save Place"}
             </button>
 
           </form>

@@ -1,0 +1,45 @@
+# Node
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Build files
+dist/
+build/
+.vite/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python testing/cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
